@@ -46,12 +46,18 @@ export default function App() {
   const [cardOne, setCardOne] = useState("None");
   const [cardTwo, setCardTwo] = useState("None");
   const [flippedCards, setFlippedCards] = useState<number[]>([]); // store indices of flipped cards
-  const [matchedCards, setMatchedCards] = useState<number[]>([]); // store indices of flipped cards
-  const [cardDisabled, setCardDisabled] = useState(false);
+  const [matchedCards, setMatchedCards] = useState<number[]>([]); // store indices of matched cards
+  const [cardDisabled, setCardsDisabled] = useState(false);
+  const [guesses, setGuesses] = useState(0);
+  const [winningGame, setWinningGame] = useState(false);
+  const [seconds, setSeconds] = useState(0);
+  const [gameTime, setGameTime] = useState(0);
+  const [gameStarted, setGameStarted] = useState(false);
 
   useEffect(() => {
     if (numberCardsSelected === 2) {
-      setCardDisabled(true);
+      setCardsDisabled(true);
+      setGuesses((prev) => (prev += 1));
       const timeout = setTimeout(() => {
         if (cardOne === cardTwo && cardOne !== "None") {
           setMatchedCards((prev) => [
@@ -67,7 +73,7 @@ export default function App() {
         setCardTwo("None");
         setNumberCardsSelected(0);
         setFlippedCards([]); // reset flipped cards
-        setCardDisabled(false);
+        setCardsDisabled(false);
       }, 1000);
 
       return () => clearTimeout(timeout);
@@ -75,9 +81,30 @@ export default function App() {
   }, [numberCardsSelected]);
 
   useEffect(() => {
+    if (totalCard == matchedCards.length) {
+      setWinningGame(true);
+      setGameTime(seconds);
+    }
+  }, [matchedCards]);
+
+  useEffect(() => {
     // Shuffle cards when totalCard changes
     shuffleCards();
   }, [totalCard]);
+
+  useEffect(() => {
+    if (gameStarted) {
+      console.log("Game started");
+      const interval = setInterval(() => setSeconds((s) => s + 1), 1000);
+      return () => clearInterval(interval); // cleanup
+    }
+  }, [gameStarted]);
+
+  useEffect(() => {
+    if (guesses == 0 && cardOne != "None") {
+      setGameStarted(true);
+    }
+  }, [flippedCards]);
 
   const shuffleCards = () => {
     const shuffled = cards.slice(0, totalCard);
@@ -108,6 +135,11 @@ export default function App() {
     setNumberCardsSelected(0);
     setFlippedCards([]);
     setMatchedCards([]);
+    setGuesses(0);
+    setCardsDisabled(false);
+    setWinningGame(false);
+    setGameStarted(false);
+    setSeconds(0);
     shuffleCards();
   };
 
@@ -129,6 +161,12 @@ export default function App() {
         <option value="14">14</option>
         <option value="16">16</option>
       </select>
+      {winningGame && (
+        <p>
+          You've won! with {guesses} guesses, in {gameTime} seconds
+        </p>
+      )}
+
       <div className="grid grid-cols-4 gap-4 mt-4">
         {cardList.slice(0, totalCard).map((card, index) => (
           <Card
@@ -144,6 +182,7 @@ export default function App() {
       <div className="mt-6">
         <p>Card One: {cardOne}</p>
         <p>Card Two: {cardTwo}</p>
+        <p>Guesses: {guesses}</p>
       </div>
       <Button onClick={handleResetClick}>Reset</Button>
     </div>
