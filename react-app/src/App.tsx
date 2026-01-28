@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import Card from "./components/Card.tsx";
+import Button from "./components/Button.tsx";
 import { Shuffle } from "lucide-react";
 
 type IconName =
@@ -39,7 +40,7 @@ const cards: CardData[] = [
 ];
 
 export default function App() {
-  const [totalCard, setTotalCard] = useState(16);
+  const [totalCard, setTotalCard] = useState(12);
   const [cardList, setCardList] = useState<CardData[]>(cards);
   const [numberCardsSelected, setNumberCardsSelected] = useState(0);
   const [cardOne, setCardOne] = useState("None");
@@ -75,15 +76,17 @@ export default function App() {
 
   useEffect(() => {
     // Shuffle cards when totalCard changes
-    setCardList(() => {
-      const shuffled = cards.slice(0, totalCard);
-      for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-      }
-      return shuffled;
-    });
+    shuffleCards();
   }, [totalCard]);
+
+  const shuffleCards = () => {
+    const shuffled = cards.slice(0, totalCard);
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    setCardList(shuffled);
+  };
 
   const handleCardClick = (emblem: IconName, index: number) => {
     setFlippedCards((prev) => [...prev, index]);
@@ -99,14 +102,33 @@ export default function App() {
     }
   };
 
+  const handleResetClick = () => {
+    setCardOne("None");
+    setCardTwo("None");
+    setNumberCardsSelected(0);
+    setFlippedCards([]);
+    setMatchedCards([]);
+    shuffleCards();
+  };
+
   return (
     <div className="p-6 w-full min-h-screen justify-center items-center flex flex-col">
-      <p>Type number of cards</p>
-      <input
-        type="number"
-        className="bg-white text-black"
+      <p>Select number of cards</p>
+      <select
+        className="mt-2 bg-gray-700 w-1/4 p-2 rounded"
+        id="selectCards"
+        disabled={flippedCards.length > 0 || matchedCards.length > 0}
+        value={totalCard}
         onChange={(e) => setTotalCard(Number(e.target.value))}
-      />
+      >
+        <option value="4">4</option>
+        <option value="6">6</option>
+        <option value="8">8</option>
+        <option value="10">10</option>
+        <option value="12">12</option>
+        <option value="14">14</option>
+        <option value="16">16</option>
+      </select>
       <div className="grid grid-cols-4 gap-4 mt-4">
         {cardList.slice(0, totalCard).map((card, index) => (
           <Card
@@ -123,6 +145,7 @@ export default function App() {
         <p>Card One: {cardOne}</p>
         <p>Card Two: {cardTwo}</p>
       </div>
+      <Button onClick={handleResetClick}>Reset</Button>
     </div>
   );
 }
